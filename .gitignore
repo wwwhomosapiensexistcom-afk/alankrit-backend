@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.log
+combined.log
+error.log
+.env
+.env.local
+.env.production
+public/uploads/
+*.tsbuildinfo

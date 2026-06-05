@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id             String      @id @default(cuid())
+  name           String      @unique
+  sku            String      @unique
+  price          Int
+  description    String      @default("")
+  material       String      @default("9K Gold")
+  purity         String      @default("37.5%")
+  weightGrams    Float
+  imageUrl       String      @default("")
+  images         String[]    @default([])
+  status         String      @default("Published")
+  availableSizes String[]    @default([])
+  goldType       String      @default("9k")
+  tier9k         String?
+  makingCharge   Float       @default(0)
+  isBestseller   Boolean     @default(false)
+  madeToOrder    Boolean     @default(false)
+  inStock        Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  categoryId     String?
+  inventory      Inventory?
+  orderItems     OrderItem[]
+  category       Category?   @relation(fields: [categoryId], references: [id])
+}
+
+model Inventory {
+  id                String            @id @default(cuid())
+  productId         String            @unique
+  quantity          Int
+  reorderPoint      Int
+  weightGrams       Float
+  lastUpdated       DateTime          @updatedAt
+  product           Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  adjustmentHistory StockAdjustment[]
+}
+
+model StockAdjustment {
+  id          String    @id @default(cuid())
+  inventoryId String
+  adjustment  Int
+  reason      String
+  notes       String?
+  createdAt   DateTime  @default(now())
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+}
+
+model Customer {
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  phone       String
+  totalSpent  Int
+  totalOrders Int
+  joinDate    DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  addresses   Address[]
+  orders      Order[]
+  wishlist    String[]  @default([])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  customerId String
+  street     String
+  city       String
+  state      String
+  pinCode    String
+  country    String   @default("India")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  customerId      String
+  subtotal        Int
+  shippingCost    Int
+  gstAmount       Int
+  totalAmount     Int
+  status          String
+  shippingAddress String
+  trackingNumber  String?
+  courierService  String?
+  notes           String?
+  paymentStatus   String
+  placedAt        DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  createdAt       DateTime    @default(now())
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Int
+  size      String?
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model AdminSettings {
+  id           String   @id @default(cuid())
+  storeName    String   @default("Alankrit")
+  contactEmail String
+  phone        String
+  address      String
+  gstNumber    String
+  openingTime  String
+  closingTime  String
+  currency     String   @default("INR")
+  updatedAt    DateTime @updatedAt
+}
+
+model GoldRate {
+  id          String   @id @default(cuid())
+  rate24k     Float
+  rate9k      Float
+  rate14k     Float    @default(0)
+  rate18k     Float    @default(0)
+  lastUpdated DateTime @default(now()) @updatedAt
+}
+
+model GoldTier {
+  id    String @id @default(cuid())
+  tier1 Float  @default(500)
+  tier2 Float  @default(1000)
+  tier3 Float  @default(1500)
+}
+
+model Discount {
+  id           String    @id @default(cuid())
+  code         String    @unique
+  label        String
+  type         String
+  discountKind String
+  value        Float
+  categoryId   String?
+  isActive     Boolean   @default(true)
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  category     Category? @relation(fields: [categoryId], references: [id])
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  slug      String     @unique
+  name      String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  discounts Discount[]
+  products  Product[]
+}
+
+model HeroBanner {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  publicId  String?
+  order     Int
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model CustomOrder {
+  id             String   @id @default(cuid())
+  itemType       String
+  occasion       String?
+  budgetRange    String
+  description    String
+  referenceImage String?
+  name           String
+  phone          String
+  email          String
+  status         String   @default("new")
+  createdAt      DateTime @default(now())
+}
+
