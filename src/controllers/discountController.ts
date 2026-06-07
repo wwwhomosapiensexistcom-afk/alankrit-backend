@@ -40,6 +40,39 @@ export async function validateCouponHandler(req: Request, res: Response, next: N
   }
 }
 
+export async function validateCouponPostHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { code, total } = req.body as { code?: string; total?: number };
+    if (!code) {
+      return res.status(400).json({ valid: false, message: 'Coupon code is required' });
+    }
+    
+    const discount = await validateCoupon(code);
+    if (!discount) {
+      return res.json({ valid: false, message: 'Invalid or expired code' });
+    }
+    
+    const orderTotal = total || 0;
+    if (discount.minOrderValue && orderTotal < discount.minOrderValue) {
+      return res.json({
+        valid: false,
+        message: `Minimum order value of ₹${discount.minOrderValue.toLocaleString()} not met`
+      });
+    }
+    
+    return res.json({
+      valid: true,
+      discount: {
+        type: discount.discountKind === 'PERCENT' ? 'percentage' : 'flat',
+        value: discount.value
+      },
+      message: 'Coupon applied successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 export async function createDiscountHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const authReq = req as AuthRequest;
@@ -53,6 +86,7 @@ export async function createDiscountHandler(req: Request, res: Response, next: N
       type: body.type,
       discountKind: body.discountKind,
       value: Number(body.value),
+      minOrderValue: body.minOrderValue !== undefined ? Number(body.minOrderValue) : 0,
       categoryId: body.categoryId || null,
       isActive: body.isActive !== false,
       expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
@@ -77,6 +111,7 @@ export async function updateDiscountHandler(req: Request, res: Response, next: N
     if (body.type !== undefined) data.type = body.type;
     if (body.discountKind !== undefined) data.discountKind = body.discountKind;
     if (body.value !== undefined) data.value = Number(body.value);
+    if (body.minOrderValue !== undefined) data.minOrderValue = Number(body.minOrderValue);
     if (body.categoryId !== undefined) data.categoryId = body.categoryId || null;
     if (body.isActive !== undefined) data.isActive = body.isActive;
     if (body.expiresAt !== undefined) data.expiresAt = body.expiresAt ? new Date(body.expiresAt) : null;

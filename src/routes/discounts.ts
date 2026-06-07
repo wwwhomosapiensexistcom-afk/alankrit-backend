@@ -3,6 +3,7 @@ import {
   listActiveDiscounts,
   listAllDiscounts,
   validateCouponHandler,
+  validateCouponPostHandler,
   createDiscountHandler,
   updateDiscountHandler,
   deleteDiscountHandler,
@@ -13,7 +14,8 @@ const router = Router();
 
 router.get('/', listActiveDiscounts);            // Public — storefront fetches on init
 router.get('/all', requireAuth, listAllDiscounts); // Admin — see all including inactive
-router.get('/validate/:code', validateCouponHandler); // Public — coupon validation
+router.get('/validate/:code', validateCouponHandler); // Public — coupon validation GET
+router.post('/validate', validateCouponPostHandler); // Public — coupon validation POST
 router.post('/', requireAuth, createDiscountHandler);
 router.put('/:id', requireAuth, updateDiscountHandler);
 router.delete('/:id', requireAuth, deleteDiscountHandler);

@@ -14,15 +14,16 @@ export async function listOrders(req: Request, res: Response, next: NextFunction
        return res.status(401).json({ error: 'Unauthorised' });
     }
 
-    const { status, customer, from, to, search } = req.query as {
+    const { status, customer, customerId, from, to, search } = req.query as {
       status?: string;
       customer?: string;
+      customerId?: string;
       from?: string;
       to?: string;
       search?: string;
     };
 
-    let targetCustomerId = customer;
+    let targetCustomerId = customer || customerId;
 
     if (authReq.user.role !== 'admin') {
       const prisma = require('../config/database').default;
@@ -93,7 +94,15 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
       customerId: targetCustomerId,
       items: Array.isArray(body.items) ? body.items : [],
       shippingAddress: body.shippingAddress,
+      deliveryAddress: body.deliveryAddress,
+      paymentMethod: body.paymentMethod,
+      makingCharges: body.makingCharges !== undefined ? Number(body.makingCharges) : undefined,
+      subtotal: body.subtotal !== undefined ? Number(body.subtotal) : undefined,
+      gstAmount: body.gstAmount !== undefined ? Number(body.gstAmount) : undefined,
+      totalAmount: body.totalAmount !== undefined ? Number(body.totalAmount) : undefined,
+      status: body.status,
       paymentStatus: body.paymentStatus,
+      notes: body.notes,
     });
 
     return res.status(201).json({ success: true, data: order });

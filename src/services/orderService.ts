@@ -16,13 +16,23 @@ export interface OrderItemInput {
   productId: string;
   quantity: number;
   size?: string;
+  price?: number;
 }
 
 export interface CreateOrderInput {
   customerId: string;
   items: OrderItemInput[];
   shippingAddress: any;
+  deliveryAddress?: any;
+  paymentMethod?: string;
+  makingCharges?: number;
+  subtotal?: number;
+  shippingCost?: number;
+  gstAmount?: number;
+  totalAmount?: number;
+  status?: string;
   paymentStatus?: string;
+  notes?: string;
 }
 
 export interface UpdateOrderInput {
@@ -76,6 +86,9 @@ function mapOrder(order: any) {
     gstAmount: paiseToRupees(order.gstAmount),
     totalAmount: paiseToRupees(order.totalAmount),
     shippingAddress: order.shippingAddress ? JSON.parse(order.shippingAddress) : null,
+    deliveryAddress: order.deliveryAddress ? JSON.parse(order.deliveryAddress) : null,
+    paymentMethod: order.paymentMethod,
+    makingCharges: paiseToRupees(order.makingCharges || 0),
     trackingNumber: order.trackingNumber,
     courierService: order.courierService,
     notes: order.notes,
@@ -96,6 +109,9 @@ function mapOrder(order: any) {
       quantity: item.quantity,
       price: paiseToRupees(item.price),
       size: item.size ?? null,
+      name: item.name || item.product?.name || 'Jewellery Item',
+      weight: item.weight || item.product?.weightGrams || 0,
+      imageUrl: item.product?.imageUrl || '',
       product:
         item.product && {
           id: item.product.id,
@@ -163,6 +179,7 @@ export async function createOrder(input: CreateOrderInput) {
     const inventoryMap = new Map(inventories.map((inv) => [inv.productId, inv]));
 
     let subtotalPaise = 0;
+    let calculatedMakingChargesPaise = 0;
 
     for (const item of input.items) {
       const product = productMap.get(item.productId);
@@ -172,13 +189,16 @@ export async function createOrder(input: CreateOrderInput) {
         });
       }
 
-      const lineTotal = product.price * item.quantity;
+      const itemPrice = item.price !== undefined ? rupeesToPaise(item.price) : product.price;
+      const lineTotal = itemPrice * item.quantity;
       subtotalPaise += lineTotal;
+      calculatedMakingChargesPaise += rupeesToPaise(product.makingCharge || 0) * item.quantity;
     }
 
     const shippingCostPaise = subtotalPaise >= rupeesToPaise(5000) ? 0 : rupeesToPaise(100);
-    const gstAmountPaise = Math.round(subtotalPaise * 0.03);
-    const totalAmountPaise = subtotalPaise + shippingCostPaise + gstAmountPaise;
+    const gstAmountPaise = input.gstAmount !== undefined ? rupeesToPaise(input.gstAmount) : Math.round(subtotalPaise * 0.03);
+    const totalAmountPaise = input.totalAmount !== undefined ? rupeesToPaise(input.totalAmount) : (subtotalPaise + shippingCostPaise + gstAmountPaise);
+    const makingChargesPaise = input.makingCharges !== undefined ? rupeesToPaise(input.makingCharges) : calculatedMakingChargesPaise;
 
     const order = await tx.order.create({
       data: {
@@ -188,9 +208,13 @@ export async function createOrder(input: CreateOrderInput) {
         shippingCost: shippingCostPaise,
         gstAmount: gstAmountPaise,
         totalAmount: totalAmountPaise,
-        status: 'Pending',
+        status: input.status || 'Processing',
         paymentStatus: input.paymentStatus ?? 'Pending',
-        shippingAddress: JSON.stringify(input.shippingAddress),
+        shippingAddress: typeof input.shippingAddress === 'string' ? input.shippingAddress : JSON.stringify(input.shippingAddress),
+        deliveryAddress: input.deliveryAddress ? JSON.stringify(input.deliveryAddress) : null,
+        paymentMethod: input.paymentMethod || 'UPI QR',
+        makingCharges: makingChargesPaise,
+        notes: input.notes,
         placedAt: now,
       },
     });
@@ -198,12 +222,15 @@ export async function createOrder(input: CreateOrderInput) {
     await tx.orderItem.createMany({
       data: input.items.map((item) => {
         const product = productMap.get(item.productId)!;
+        const itemPrice = item.price !== undefined ? rupeesToPaise(item.price) : product.price;
         return {
           orderId: order.id,
           productId: item.productId,
           quantity: item.quantity,
-          price: product.price,
+          price: itemPrice,
           size: item.size ?? null,
+          name: product.name,
+          weight: product.weightGrams,
         };
       }),
     });

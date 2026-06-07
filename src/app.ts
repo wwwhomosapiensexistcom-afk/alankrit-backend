@@ -15,7 +15,7 @@ import uploadRoutes from './routes/upload';
 import goldRateRoutes from './routes/goldRates';
 import categoryRoutes from './routes/categories';
 import discountRoutes from './routes/discounts';
-import paymentRoutes from './routes/payment';
+import settingsRoutes from './routes/settings';
 import heroRoutes from './routes/heroes';
 import customOrderRoutes from './routes/customOrders';
 
@@ -60,7 +60,7 @@ app.use('/api/gold', goldRateRoutes);
 app.use('/api/gold-rates', goldRateRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/discounts', discountRoutes);
-app.use('/api/payment', paymentRoutes);
+app.use('/api/settings', settingsRoutes);
 app.use('/api/heroes', heroRoutes);
 app.use('/api/custom-orders', customOrderRoutes);
 

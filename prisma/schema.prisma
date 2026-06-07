@@ -104,6 +104,9 @@ model Order {
   totalAmount     Int
   status          String
   shippingAddress String
+  deliveryAddress String?
+  paymentMethod   String?
+  makingCharges   Int         @default(0)
   trackingNumber  String?
   courierService  String?
   notes           String?
@@ -122,6 +125,8 @@ model OrderItem {
   quantity  Int
   price     Int
   size      String?
+  name      String?
+  weight    Float?
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id])
 }
@@ -156,18 +161,19 @@ model GoldTier {
 }
 
 model Discount {
-  id           String    @id @default(cuid())
-  code         String    @unique
-  label        String
-  type         String
-  discountKind String
-  value        Float
-  categoryId   String?
-  isActive     Boolean   @default(true)
-  expiresAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  category     Category? @relation(fields: [categoryId], references: [id])
+  id            String    @id @default(cuid())
+  code          String    @unique
+  label         String
+  type          String
+  discountKind  String
+  value         Float
+  minOrderValue Int       @default(0)
+  categoryId    String?
+  isActive      Boolean   @default(true)
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  category      Category? @relation(fields: [categoryId], references: [id])
 }
 
 model Category {
@@ -202,4 +208,12 @@ model CustomOrder {
   status         String   @default("new")
   createdAt      DateTime @default(now())
 }
+
+model SiteSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 

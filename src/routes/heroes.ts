@@ -63,7 +63,8 @@ const upload = multer({
 // Helper: upload buffer to Cloudinary
 function uploadHeroToCloudinary(buffer: Buffer, originalName: string): Promise<{ url: string; publicId: string }> {
   return new Promise((resolve, reject) => {
-    const publicId = `alankrit/heroes/${Date.now()}-${path.parse(originalName).name}`;
+    const filenameWithoutExt = path.parse(originalName).name.replace(/[^a-zA-Z0-9-_]/g, '_');
+    const publicId = `${Date.now()}-${filenameWithoutExt}`;
 
     cloudinary.uploader
       .upload_stream(

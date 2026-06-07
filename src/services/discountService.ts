@@ -38,6 +38,7 @@ export async function createDiscount(data: {
   type: string;
   discountKind: string;
   value: number;
+  minOrderValue?: number;
   categoryId?: string | null;
   isActive?: boolean;
   expiresAt?: Date | null;
@@ -46,6 +47,7 @@ export async function createDiscount(data: {
     data: {
       ...data,
       code: data.code.toUpperCase().trim(),
+      minOrderValue: data.minOrderValue !== undefined ? Number(data.minOrderValue) : 0,
     },
     include: { category: true },
   });
@@ -59,12 +61,14 @@ export async function updateDiscount(
     type: string;
     discountKind: string;
     value: number;
+    minOrderValue: number;
     categoryId: string | null;
     isActive: boolean;
     expiresAt: Date | null;
   }>
 ) {
   if (data.code) data.code = data.code.toUpperCase().trim();
+  if (data.minOrderValue !== undefined) data.minOrderValue = Number(data.minOrderValue);
   return prisma.discount.update({
     where: { id },
     data,

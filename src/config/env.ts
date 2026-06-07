@@ -30,6 +30,4 @@ export const ENV = {
   SENDGRID_API_KEY: process.env.SENDGRID_API_KEY ?? '',
   SENDGRID_FROM_EMAIL: process.env.SENDGRID_FROM_EMAIL ?? 'noreply@alankrit.com',
   SENDGRID_FROM_NAME: process.env.SENDGRID_FROM_NAME ?? 'Alankrit',
-  RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID ?? '',
-  RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET ?? '',
 };
